@@ -2,7 +2,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 // Company: 
 // Engineer: 
-// Versions: 1.00-a
+// Versions: 1.00-b
 // Create Date: 10/27/2019 07:05:35 PM
 // Design Name: 
 // Module Name: ddr_control
@@ -19,40 +19,48 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 // added ck_s
-module ddr_control(ck_s ODT ,CK ,CK_ ,CKE ,CS_ ,RAS_ ,CAS_ ,WE_ ,A ,AB_s,AB,DQ ,DQS_DQS_m ,RDQS_ ,RDQS ,DM ,com ,data ,add,ACLK,ARESETN,ARADDR,ARVA_ID,ARREADY,RDATA,RRESP,RVALID,RREADY,AWADDR,AWVALID,AWREADY,WDATA,WSTRB,BRESP,BVALID,BREADY);
+module ddr_control(
 
 //////////////////////////DDR2 CONTROLLER SIGNALS
 
-input com[3:0],add[13:0],DM,AB_s[2:0],ck_s; //com,data,add is the suorce input.
+input [3:0]com,
+input [13:0]add,
+input DM,ck_s,
+input [2:0]AB_s, //com,data,add is the suorce input.
 //AB_s the bank signal from cpu.
 
-inout  DQ[7:0],data[7:0],DQS_DQS_m,DQS_DQS_s;
-output reg ODT,CK,CK_,CKE,CS_,RAS_,CAS_,WE_,A,AB,RDQS_,RDQS;
+inout  [7:0]DQ,data,
+inout DQS_DQS_m,DQS_DQS_s,
+output  ODT,CK,CK_,CKE,CS_,RAS_,CAS_,WE_,A,AB,RDQS_,RDQS,
 
 //////////////////////////AXI4 LITE DIFINE PORTS by refrance(https://www.realdigital.org/doc/a9fee931f7a172423e1ba73f66ca4081)
 
 // Global Signals
-input ACLK,ARESETN;
+input ACLK,ARESETN,
 
 //Read Address Channel
-input ARADDR[31:0],ARVALID;
-output ARREADY;
+input [31:0]ARADDR,
+input ARVALID,
+output ARREADY,
 
 //Read Data Channel
-input RREADY;
-output RDATA[31:0],RRESP,RVALID;
+input RREADY,
+output [31:0]RDATA,
+output RRESP,RVALID,
 
 //Write Address Channel
-input AWADDR[31:0],AWVALID;
-output AWREADY;
+input [31:0]AWADDR,
+input AWVALID,
+output AWREADY,
 
 //Write Data Channel
-input WDATA[31:0],WSTRB[3:0];
+input [31:0] WDATA,
+input [3:0] WSTRB,
 
 //Write Response Channel
-input BREADY;
-output BRESP,BVALID;
-
+input BREADY,
+output BRESP,BVALID
+);
 
 
 endmodule
