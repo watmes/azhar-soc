@@ -23,7 +23,9 @@ module ps_2(
 ////////////////////////// PS/2  SIGNALS
 
 input data,clk,
-output [7:0] da_t_cpu,clk_slave,
+output [7:0] da_t_cpu,
+output clk_slave,
+
 
 //////////////////////////AXI4 LITE DIFINE PORTS by refrance(https://www.realdigital.org/doc/a9fee931f7a172423e1ba73f66ca4081)
 
