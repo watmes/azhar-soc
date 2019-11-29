@@ -1,0 +1,232 @@
+#include <stdio.h>
+#include <string.h>
+#define CLKDIV  9600
+#define SAMPLING_RATE 16
+#define UART_base  0x1001000000000000
+struct IER {                          //interrupt enable register. 
+	uint8_t  EN_RX_D_V:1;                    //bit(0)=>enable received data available interrupt.
+	uint8_t  EN_TX_H:1;                      //bit(1)=>enable transmitter holding register empty interrupt.
+	uint8_t EN_RX_L:1;                      //bit(2)=>enable receiver line status interrupt.
+	uint8_t  EN_M:1;                         //bit(3)=>enable modem status interrupt.
+	uint8_t  unused:4;                       //bit(4,5,6,7,8)=>unused.
+};
+struct IIR{                           //interrupt identification register.
+	uint8_t IN_P:1;                          //bit(0)=>interrupt pending.
+	uint8_t MIX:3;                           /*(011)=>receiver line status interrupt parity ,data overrun,or framing error ,or break interrupt
+                                            (010)=>receiver data avilable receiver FIFO trigger level reached
+                                            (110)=>timeout indication   (001)=>transmit hold register empty   (000)=>modem status interrupt 
+                                            (4,5,7)=>unused.*/
+    uint8_t RESERVED:2;              //ALWAYS =00.
+    uint8_t FIFO_EN:2;               //These two bits are set when FCR0=1.
+};
+struct FCR{                          //FIFO control register 
+	uint8_t EN_FIFO:1; 
+    uint8_t RX_FIFO_RESET:1;
+    uint8_t TX_FIFO_RESET:1;
+    uint8_t DMA_MODE:1;
+    uint8_t RESER_IGNORED:2;
+    uint8_t RX_FIFO_TRIGGER:2;	
+};
+struct LCR{                        //line control register.
+    uint8_t W_L:2;                        //word lenth select.
+	uint8_t NUMBER_STOP:1;                //number of stop bits.
+	uint8_t P_EN:1;                       //parity enable.
+	uint8_t EVEN_P:1;                     //even parity.
+	uint8_t STICK_P:1;                    //stick parity ignored.
+	uint8_t S_BRAKE:1;                   
+	uint8_t D_LATCH:1;                    //divisor latch.
+};
+struct MCR{                        //modem control register.
+    uint8_t DTRN:1;                       // This bit controls the Data Terminal Ready (DTR) output     "bit is inverted to drive pin."
+	uint8_t RTSN:1;                       //This bit controls the Request to Send (RTS) output.          "bit is inverted to drive pin."
+	uint8_t OUT1N:1;                      //This bit controls the Output 1 (OUT 1) signal.
+	uint8_t OUT2N:1;                      //This bit controls the Output 2 (OUT 2) signal.
+	uint8_t L_B_M:1;                     // This bit provides a local loopback feature for diagnostic testing of the UART.  "loop back mode."
+	uint8_t IGNO:3;                      //These bits are permanently set to logic 0. 
+};
+struct LSR{                       //line status register.
+    uint8_t DATA_READY:1;
+	uint8_t ERROR:1;                     //overrun error.
+	uint8_t P_ERROE:1;                   
+	uint8_t F_ERROE:1;                   //framing error.
+	uint8_t B_IN:1;                      //break interrupt.
+	uint8_t TX_H:1;                      //transmitter holding register.
+	uint8_t TX_EMPTY:1;                  
+	uint8_t ERROR_RECEIVE_FIFO:1;
+};
+struct MSR{                       //modem status register.
+    uint8_t D_CLEAR:1;                   //delta clear to send.
+	uint8_t D_SET:1;                     //delta data set ready.
+	uint8_t T_EDGE:1;                    //trailing edge ring indicator.
+	uint8_t D_CARRIER:1;                 //delta data carrier detect.
+	uint8_t CLEAR:1;                     //clear to send.
+	uint8_t DATA_SET:1;                  //data set ready.
+	uint8_t RING:1;                      //ring indicator.
+	uint8_t DATA_DETECT:1;               //data carrier detect.
+};
+union U1{
+	IIR    IIR_;
+	FCR    FCR_;
+};
+union u2{
+	IER    IER_;
+	uint8_t DLM;
+};
+union u3{
+	uint8_t RBR;
+	uint8_t THR;
+	uint8_t DLL;
+}; 
+struct UART{
+	union u3       ADDRESS0_RBR;
+	union u2       ADDRESS1_DLM;
+	union U1       ADDRESS2_IIR;
+	struct LCR     ADDRESS3_LCR;
+	struct MCR     ADDRESS4_MCR;
+	struct LSR     ADDRESS5_LSR;
+	struct MSR     ADDRESS6_MSR;
+	char SCR;
+};
+
+struct UART *HW; 
+	HW = (struct UART *) ((long) UART_base);
+	
+	
+int BAUD_RAT_GENERATION ( int SYS_CLK )    //Baud rate Generation .
+{
+	uint16_t BAUD_RAT;
+	BAUD_RAT = (SYS_CLK )/(SAMPLING_RATE * CLKDIV );
+	HW->ADDRESS0_RBR=BAUD_RAT&0xff;
+	HW->ADDRESS1_DLM=BAUD_RAT>>8;
+	return 1;
+} 
+uint8_t SET_INTERRUPT_EN ( uint8_t SET)      //SET INTERRUPT ENABLE .
+{
+
+	HW->ADDRESS1_DLM=SET;
+	return;
+}
+uint8_t SET_FIFO_CONTROL ( uint8_t SET_FIFO)    //SET FIFO CONTROL
+{
+	  
+	 HW->ADDRESS2_IIR=SET_FIFO;            
+	return;
+}
+uint8_t SET_PARITY ( uint8_t SET_P)            //SET PARITY  && set all LCR
+{
+    HW->ADDRESS3_LCR=SET_P;
+ return ;	
+}
+uint8_t SET_MCR ( uint8_t SET_M)           //set modem control register.
+{
+	HW-> ADDRESS4_MCR=SET_M;
+	return;
+}
+uint8_t SET_LSR ( uint8_t SET_L)           //set line status register.
+{
+	HW->ADDRESS5_LSR=SET_L;
+	return;
+}
+char SAVE_WORDS_AND_RETURN_OLD ( int x , char WORDE[7])      //to save "words".
+{
+
+	char OLD_WORDE[7];
+	uint8_t EMPTY = 0x00 ;
+	if ( x==1)                                    
+	{
+		for (int i=0 ; i<=7 ; i++ )              //if the programmer need  "the old words";
+		{
+		OLD_WORDE(i)=HW->SCR; 
+		return OLD_WORDE ;
+		}
+	}
+	else                                     //if not. 
+	{
+		return  EMPTY ;
+	}
+	
+	 HW->SCR=EMPTY;               //make the SCR register empty . 
+	 for (int i=0 ; i<=7 ; i++)              // save programmer's words
+	 {
+		 HW->SCR=WORDE(i);
+		 return 1 ;                             //to be sure .
+	 }
+}
+char READ_OLD_WORDS_IN_SCR ()          //read old words in SCR only.
+{
+	char word[7];
+	for (int i=0 ; i<=7 ;i++ )
+	{
+		word(i)=HW->SCR;
+	}
+	return word;
+}
+
+uint8_t uart_init() {
+	/* This function initates the uart component after a power on reset.
+	 * It should only be called once. It sets the baud-rate to 9600, fills the control register with the default values, and clears any fifo.
+	 * The exact sequence of the initiation process should be described in the uart 16550a manual.
+	 */
+	
+	//your code goes here
+	//------------------
+	// sets the baud-rate to 9600.
+	int RAT=1474560000;                     //"9600*9600*16" 
+	//to make baud rate =9600 -------- where   --BAUD_RAT = (SYS_CLK )/(SAMPLING_RATE * CLKDIV ) -SAMPLING_RATE=16  -CLKDIV=9600
+	 BAUD_RAT_GENERATION (RAT);
+    //-----------------
+    HW->ADDRESS3_LCR.D_LATCH=1; //this bit is the divisor latch access bit.
+    //-----------------
+	 uint8_t SET_I=0x0f;
+	 //To make the interrupt enable register ready.
+    SET_INTERRUPT_EN (SET_I); 
+	// 8 bits ,one stop bit ,no parity
+	  uint8_t SET_PA =0x03;
+	SET_PARITY (SET_PA);
+	//------------------
+	uint8_t MODEM=0x00;
+	SET_MCR (MODEM);
+	//-----------------
+	//clear fifo
+	uint8_t SET_F=0x07;
+	SET_FIFO_CONTROL (SET_F); 
+	//clear LINE Status R
+	uint8_t SET_LS=0x00;
+	SET_LSR (SET_LS); 
+	//make the scratcpad ready
+	int y=0;
+	char WORDE_C[7]=0x00;
+	SAVE_WORDS_AND_RETURN_OLD (y, WORDE_C);
+	if ("until i know correct") //replace the condition with the right condition
+		return 1;
+	else
+		return 0;
+
+}
+void uart_print(const char * string) {
+	/* Pass the string to the uart, charachter by character.
+	 * This function doesn't return anything.
+	 * Example usage : uart_print( & "This is a test message to be transmitted over the uart component");
+	 */
+
+	//your code goes here
+	//-----------asynchronous 
+	int i=0;
+	//while(HW-> ADDRESS5_LSR. DATA_READY)
+	//{
+		if (string(i)!='\0')
+		{
+		   HW->ADDRESS0_RBR=string(i);
+            i++;		  
+		}
+	//}
+	return;
+}
+void uart_READ(void){
+	char WR[7];
+	for(int i=0;i<=7;i++)
+	{
+	     WR(i)=HW->ADDRESS0_RBR;		 
+	}
+	return WR;
+}
