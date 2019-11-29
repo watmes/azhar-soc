@@ -1,0 +1,154 @@
+#include <stdio.h>
+#include <string.h>
+#define DDR2_base  0x1001000000000000
+	struct SDRSTAT{                        //SDRAM status register.
+	      uint8_t RESERVED_1:2;                
+		  uint8_t PHYRDY:1;                   //ddr2 memory controller DLL read .
+		  uint32_t RESERVED_2:29;		
+	};
+	struct SDBCR {                        //SDRAM bank configuration register.
+	      uint8_t PAGESZE:3;  
+          uint8_t RESERVED_3:1;                //always write a 0 to this bit.
+          uint8_t IBANK:3;   
+          uint8_t RESERVED_4:2;
+          uint8_t CL:3;
+          uint8_t RESERVED_5:2;
+          uint8_t NM:1                         //bit(0)=>32bit bus width &&&&&& bit(1)=>16 bit bus width.
+          uint8_t TIMUNLOCK:1;                 //timing unlock.
+          uint8_t  RESERVED_6:2;                //always write a 3h to these bits.
+          uint8_t DDRDRIVE:1;                  		 
+		  uint8_t RESERVED_7:4;               //always write a 2h to these bits.
+		  uint8_t BOOTUNLOCK:1;
+		  uint8_t RESERVED_8:8;
+	};
+	struct SDRCR {                       //SDRAM refresh control register.
+	     uint16_t RR:16;                       //REFRESH RATE.
+		 uint16_t RESERVED_9:14;  
+		 uint8_t MCLKSTOPEN:1;                //mclk stop enable.
+		 uint8_t SR:1;                        // self refresh.	
+	};
+	struct SDTIMP {                      //SDRAM timing register.
+         uint8_t T_WTR:2;                     //T_WTR=(T(wtr)/DDR_CLK0 prion)-1.
+         uint8_t RESERVED_10:1;
+         uint8_t T_RRD:3;                    //T_RRD=(T(rrd)/DDR_CLK0 period)-1.
+         uint8_t T_RC:5;                     //T_RC=(T(rc)/DDR_CLK0 period)-1.
+		 uint8_t T_RAS:5;                    /*T_RAS=(T(ras)/DDR_CLK0 period)-1 &&T_RAS MUST BE GREATER THAN OR EQUAL TO T_RCD.*/
+		 uint8_t T_WR:3;                     //T_WR=(T(wr)/DDR_CLK0 period)-1.
+		 uint8_t T_RCD:3;                    //T_RCD=(T(rcd)/DDR_CLK0 period)-1.
+		 uint8_t T_RP:3;                     //T_RP=(T(rp)/DDR_CLK0 period)-1.
+		 uint8_t T_RFC:7;                    //T_RFC=(T(rfc)/DDR_CLK0 period)-1.
+	};
+	struct SDTIMR2 {                    //SDRAM timing register 2.
+	    uint8_t T_CKE:5;                     //T_CKE =T(cke)-1.
+	    uint8_t T_RTP:3;                     //T_RTP=(T(rtp)/DDR_CLK0 period.
+	    uint8_t T_XSRD:8;                    //T_XSRD=T(xsrd)-1.
+	    uint8_t T_XSNR:7;                    //T_XSNR=(T(xsnr/DDR_CLK0 period.
+	    uint8_t RESERVED_11:2;               //reset value is indeterminate.
+	    uint8_t RESERVED_12:7;
+	};
+	struct PBBPR {                       //peripherel bus burst priority register.
+	     uint8_t PR_OLD_COUNT:8;             
+		 uint32_t  RESERVED_13:24;
+	};
+	struct IRR {                        //interrupt raw register.
+	      uint8_t RESERVED_14:2;
+		  uint8_t LT:1;
+		  uint32_t RESERVED_15:29;
+	};
+	struct IMR {                         //interrupt masked register .
+	     uint8_t RESERVED_16:2;
+		 uint8_t LTM:1;                       //line trap condition.
+		 uint32_t RESERVED_17:29;
+	};
+	struct IMSR {                        //interrupt mask set register .
+	    uint8_t RESERVED_18:2;
+	    uint8_t LTMSET:1;
+	    uint32_t RESERVED_19:29;
+	};
+	struct IMCR {                       //interrupt mask clear register.
+	     uint8_t RESERVED_20:2;
+         uint8_t LTMCLR:1;
+         uint32_t RESERVED_21:29; 		
+	};
+	struct DDRPHYCR {                   //DDR PHY control register.
+	     uint8_t READLAT:3;                  //read latency.
+		 uint8_t RESERVED_22:1;
+		 uint8_t DLLPWRDN:1;
+		 uint8_t DLLRESET:1;
+		 uint8_t RESERVED_23:2;
+		 uint8_t RESERVED_24:8;
+		 uint16_t RESERVED_25:16;
+	};
+	struct VTPLOCR {                        //VTP control register.
+	    uint8_t NCH:5;
+	    uint8_t PCH:5;
+	    uint8_t RESERVED_26:1;
+	    uint8_t RESERVED_27:2;
+	    uint8_t EN :1;
+	    uint8_t RESERVED_28:1;
+	    uint8_t RECAL:1;
+	    uint16_t RESERVED_29:16;
+	};
+	struct DDRVTPR {                      //DDR VTP register.
+	     uint8_t NCH:5;
+		 uint8_t PCH:5;
+		 uint32_t RESERVED_30:22;
+	};
+	struct DDRVTPER {                     //DDR VTP enable register.
+	     uint8_t EN:1;
+		 uint32_t RESERVED_31:31;
+	};
+struct DDR2 {
+	struct SDRSTAT SDRSTAT_1;
+	struct SDBCR SDBCR_1;
+	struct SDRCR SDRCR_1;
+	struct SDTIMP SDTIMP_1;
+	struct SDTIMR2 SDTIMR2_1;
+	struct PBBPR  PBBPR_1;
+	struct IRR IRR_1;
+	struct IMR IMR_1;
+	struct IMSR IMSR_1;
+	struct IMCR IMCR_1;
+	struct DDRPHYCR DDRPHYCR_1 ;
+	struct VTPLOCR VTPLOCR_1;
+	struct DDRVTPR  DDRVTPR_1;
+	struct DDRVTPER DDRVTPER_1;
+};
+ int  API_DDR2_RAM_INIT(struct DDR2 *ADDRESS_NEED ,int NOF_BYTE ){                       //function (1) "for intialize my rom".
+           
+	  ////// EMPTY "NEXT STEP "
+    return 1; // I THINK THAT TO KNOWN THE PROGRAMER THAT MEMORY IS READY.	  
+ }
+ int API_DDR2_PAGE_SIZE (struct DDR2 *  PAGE_SIZE_NEED){                                 // the value of PAGE_SIZE is.....
+	        int   PAGE_SIZE = PAGE_SIZE_NEED ->SDBCR_1.PAGESZE;
+
+	  return   PAGE_SIZE;
+ }
+ int API_DDR2_BUS_WIDTH (struct DDR2 * BUS_WIDTH_NEED){                                // the value BUS_WIDTH of  is......
+	     int BUS_WIDTH=BUS_WIDTH_NEED->SDBCR_1.NM;
+	  return BUS_WIDTH;
+ }
+ int API_DDR2_STRENGTH(struct DDR2 * STRENGTH){                                 //DDR2 SDRAM drive strength is....
+	 int DDR2_STRENGTH;
+	 DDR2_STRENGTH=STRENGTH-> SDBCR_1.DDRDRIVE;
+	  return DDR2_STRENGTH;
+ }
+ int API_DDR2_BOOTUNLOCK(struct DDR2 *_BOOTUNLOCK){                            // TO KNOW IF THE DDRDIVE BIT VALUE CHANGE OR NOT .
+	 int DDR2_BOOTUNLOCK;
+	 DDR2_BOOTUNLOCK=_BOOTUNLOCK->SDBCR_1.BOOTUNLOCK;
+	  return DDR2_BOOTUNLOCK;
+ }
+ 
+int main (){
+	struct DDR2 *HW;
+	HW = (struct DDR2 *) ((long) DDR2_base);
+	API_DDR2_PAGE_SIZE (HW);
+	API_DDR2_BUS_WIDTH (HW);
+	if ((API_DDR2_RAM_INIT(HW ,int NOF_BYTE ))==1){
+	prtintf ("initiated SD RAM controller succesfully \n \r");}
+	else {
+	printf ("couldn't initiated SD RAM controller \n\r");}
+	API_DDR2_STRENGTH(HW);
+    API_DDR2_BOOTUNLOCK(HW);
+return (0);
+}
